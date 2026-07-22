@@ -174,3 +174,4 @@ MIT License
 ---
 
 **Built with 🤍 for adult literacy learners**
+**Built by Suhan Kintali, Joseph, Sanjeev, and Vihaan Bhhat**
