@@ -6,10 +6,20 @@ export type Question = {
   answer: string
 }
 
-export const lessons: { id: string; title: string; questions: Question[] }[] = [
+export type Lesson = {
+  id: string
+  title: string
+  icon: string
+  description: string
+  questions: Question[]
+}
+
+export const lessons: Lesson[] = [
   {
     id: 'letters-1',
     title: '🔤 Letters: A - E',
+    icon: '🔤',
+    description: 'Practice the first letter sounds with simple prompts.',
     questions: [
       { id: 'q1', type: 'letter', prompt: 'Listen and type the letter for the sound: /æ/ (like in "cat")', answer: 'a' },
       { id: 'q2', type: 'letter', prompt: 'Listen and type the letter for the sound: /b/ (like in "ball")', answer: 'b' },
@@ -21,6 +31,8 @@ export const lessons: { id: string; title: string; questions: Question[] }[] = [
   {
     id: 'letters-2',
     title: '🔤 Letters: F - J',
+    icon: '🅵',
+    description: 'Learn the next letters with listening and matching practice.',
     questions: [
       { id: 'q6', type: 'letter', prompt: 'Listen and type the letter for the sound: /f/ (like in "fish")', answer: 'f' },
       { id: 'q7', type: 'letter', prompt: 'Listen and type the letter for the sound: /g/ (like in "go")', answer: 'g' },
@@ -31,7 +43,9 @@ export const lessons: { id: string; title: string; questions: Question[] }[] = [
   },
   {
     id: 'words-1',
-    title: '📖 Simple Words',
+    title: '🍎 Simple Words',
+    icon: '🍎',
+    description: 'Match everyday words to pictures and practice spelling.',
     questions: [
       { id: 'w1', type: 'word', prompt: 'Read and type this word: CAT', answer: 'cat' },
       { id: 'w2', type: 'mcq', prompt: 'Which word means a small pet that says "meow"?', choices: ['dog', 'cat', 'cow', 'fish'], answer: 'cat' },
@@ -42,7 +56,9 @@ export const lessons: { id: string; title: string; questions: Question[] }[] = [
   },
   {
     id: 'words-2',
-    title: '📖 Common Words',
+    title: '📚 Common Words',
+    icon: '📚',
+    description: 'Read and choose familiar words from the world around you.',
     questions: [
       { id: 'w6', type: 'word', prompt: 'Read and type this word: BOOK', answer: 'book' },
       { id: 'w7', type: 'mcq', prompt: 'Which word means a place where you sleep?', choices: ['room', 'bed', 'house', 'chair'], answer: 'bed' },
