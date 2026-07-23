@@ -1,15 +1,15 @@
 # 📚 Adult Literacy PWA
 
-A modern, progressive web app for adult literacy learners with **speech recognition**, **text-to-speech**, **dark blue theme**, and **gamification features**.
+A modern, progressive web app for adult literacy learners with **speech recognition**, **text-to-speech**, **dark blue theme**, **gamification features**, and improved offline caching.
 
 ## 🌟 Features
 
 ### Core Learning
-- ✅ **Text-to-Speech**: Automatic reading of questions (auto-play on load, manually repeatable)
-- 🎤 **Speech Recognition**: Answer questions using voice input
-- 📖 **Structured Lessons**: 4 lesson categories with 20+ questions
-- 💾 **Offline Support**: Works completely offline with local progress storage
-- 📊 **Progress Tracking**: Auto-saves your progress after every question
+- ✅ **Text-to-Speech**: Questions are read aloud automatically with repeat support
+- 🎤 **Speech Recognition**: Answer questions using your voice when supported
+- 📖 **Structured Lessons**: 4 lesson modules with 20+ questions and progress highlights
+- 💾 **Improved Offline Support**: PWA-ready caching keeps the app available even without a network
+- 📊 **Progress Tracking**: Auto-saves progress, streaks, XP, and achievements locally
 
 ### Gamification
 - ⭐ **XP System**: Earn experience points for completing lessons

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { UserProvider, UserContext } from './context/UserContext'
+import { UserProvider } from './context/UserContext'
 import Onboarding from './components/Onboarding'
 import { LessonEngine } from './components/LessonEngine'
 import { Dashboard } from './pages/Dashboard'
@@ -10,7 +10,7 @@ import { useUser } from './hooks/useUser'
 type Page = 'dashboard' | 'learn' | 'lesson' | 'profile'
 
 const AppContent = () => {
-  const { user, setUser } = React.useContext(UserContext)!
+  const { user, setUser, logout } = useUser()
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0)
 
@@ -49,7 +49,7 @@ const AppContent = () => {
       {currentPage === 'dashboard' && (
         <Dashboard
           onStartLearning={() => setCurrentPage('learn')}
-          onLogout={() => setUser(null)}
+          onLogout={() => logout()}
         />
       )}
 
@@ -60,7 +60,7 @@ const AppContent = () => {
               setSelectedLessonIndex(idx)
               setCurrentPage('lesson')
             }}
-            onLogout={() => setUser(null)}
+            onLogout={() => logout()}
           />
           <button
             className="secondary"
@@ -74,7 +74,11 @@ const AppContent = () => {
 
       {currentPage === 'lesson' && (
         <>
-          <LessonEngine user={user.name} />
+          <LessonEngine
+            user={user.name}
+            initialLessonIndex={selectedLessonIndex}
+            onFinishLesson={() => setCurrentPage('dashboard')}
+          />
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
             <button
               className="secondary"
@@ -95,7 +99,7 @@ const AppContent = () => {
 
       {currentPage === 'profile' && (
         <>
-          <Profile onLogout={() => setUser(null)} />
+          <Profile onLogout={() => logout()} />
           <button
             className="secondary"
             onClick={() => setCurrentPage('dashboard')}

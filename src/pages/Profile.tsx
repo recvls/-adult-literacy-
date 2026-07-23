@@ -1,6 +1,7 @@
 import React from 'react'
 import { useUser } from '../hooks/useUser'
 import { Navbar } from '../components/Navbar'
+import { Achievement } from '../components/Achievement'
 
 export const Profile: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   const { user } = useUser()
@@ -54,6 +55,8 @@ export const Profile: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
             You are making great progress on your literacy journey! Keep practicing daily to maintain your streak and unlock all achievements.
           </p>
         </div>
+
+        <Achievement />
       </div>
     </>
   )

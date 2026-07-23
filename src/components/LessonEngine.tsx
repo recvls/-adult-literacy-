@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { lessons, Question } from '../data/lessons'
-import { speakText, stopSpeech, isSpeechSynthesisSupported, startSpeechRecognition, stopSpeechRecognition, isSpeechRecognitionSupported } from '../utils/speechService'
+import {
+  speakText,
+  stopSpeech,
+  isSpeechSynthesisSupported,
+  startSpeechRecognition,
+  stopSpeechRecognition,
+  isSpeechRecognitionSupported
+} from '../utils/speechService'
 import { useUser } from '../hooks/useUser'
 
-type Progress = { lessonId: string; qIndex: number }
-
-export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
-  const [lessonIndex, setLessonIndex] = useState(0)
+export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number; onFinishLesson?: () => void }> = ({ user, initialLessonIndex = 0, onFinishLesson }) => {
+  const [lessonIndex, setLessonIndex] = useState(() => Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1))
   const [qIndex, setQIndex] = useState(0)
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect'; message: string } | null>(null)
@@ -14,11 +19,13 @@ export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
   const [isListening, setIsListening] = useState(false)
   const [showReset, setShowReset] = useState(false)
   const recognitionRef = React.useRef<any>(null)
-  const { addXP, completeLesson, addAchievement } = useUser()
+  const { addXP, completeLesson } = useUser()
 
   const lesson = lessons[lessonIndex]
   const q: Question = lesson.questions[qIndex]
-  const progress = ((lessonIndex * 10 + qIndex + 1) / (lessons.length * 10)) * 100
+  const totalQuestions = lessons.reduce((sum, lessonItem) => sum + lessonItem.questions.length, 0)
+  const currentQuestionIndex = lessons.slice(0, lessonIndex).reduce((sum, lessonItem) => sum + lessonItem.questions.length, 0) + qIndex + 1
+  const progress = (currentQuestionIndex / totalQuestions) * 100
 
   useEffect(() => {
     setFeedback(null)
@@ -32,6 +39,7 @@ export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
   }, [lessonIndex, qIndex])
 
   const speakQuestion = () => {
+    if (!isSpeechSynthesisSupported()) return
     setIsSpeaking(true)
     speakText(q.prompt, () => {
       setIsSpeaking(false)
@@ -40,7 +48,7 @@ export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
 
   const listenForAnswer = () => {
     if (!isSpeechRecognitionSupported()) {
-      setFeedback({ type: 'incorrect', message: 'Speech recognition not supported on your device' })
+      setFeedback({ type: 'incorrect', message: 'Speech recognition not supported on this device' })
       return
     }
 
@@ -72,27 +80,43 @@ export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
     addXP(10)
   }
 
+  const goToNextQuestion = (nextLesson = false) => {
+    if (nextLesson) {
+      const isFinalLesson = lessonIndex + 1 >= lessons.length
+      handleComplete()
+      if (isFinalLesson) {
+        speakText('Congratulations! You have completed all lessons!', () => {
+          setFeedback({ type: 'correct', message: '🏆 All done! Great job! Go to Dashboard to restart.' })
+          onFinishLesson?.()
+        })
+        return
+      }
+      setLessonIndex((current) => current + 1)
+      setQIndex(0)
+      return
+    }
+
+    setQIndex((current) => current + 1)
+  }
+
   const submit = () => {
     const correct = q.answer.trim().toLowerCase() === answer.trim().toLowerCase()
-    
+    const onAdvance = () => {
+      const isLastQuestionInLesson = qIndex + 1 >= lesson.questions.length
+      const isLastLesson = lessonIndex + 1 >= lessons.length
+      if (!isLastQuestionInLesson) {
+        setQIndex((current) => current + 1)
+        setAnswer('')
+        setFeedback(null)
+        return
+      }
+      goToNextQuestion(true)
+    }
+
     if (correct) {
       setFeedback({ type: 'correct', message: '🎉 Correct! Great job!' })
       speakText('Correct! Well done!', () => {
-        setTimeout(() => {
-          setAnswer('')
-          if (qIndex + 1 < lesson.questions.length) {
-            setQIndex(qIndex + 1)
-          } else if (lessonIndex + 1 < lessons.length) {
-            handleComplete()
-            setLessonIndex(lessonIndex + 1)
-            setQIndex(0)
-          } else {
-            handleComplete()
-            speakText('Congratulations! You have completed all lessons!', () => {
-              setFeedback({ type: 'correct', message: '🏆 All done! Great job! Go to Dashboard to restart.' })
-            })
-          }
-        }, 1500)
+        setTimeout(onAdvance, 1500)
       })
     } else {
       setFeedback({
@@ -100,16 +124,7 @@ export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
         message: `❌ Not quite. The answer is: ${q.answer}`
       })
       speakText(`The answer is ${q.answer}`, () => {
-        setTimeout(() => {
-          setAnswer('')
-          if (qIndex + 1 < lesson.questions.length) {
-            setQIndex(qIndex + 1)
-          } else if (lessonIndex + 1 < lessons.length) {
-            handleComplete()
-            setLessonIndex(lessonIndex + 1)
-            setQIndex(0)
-          }
-        }, 2000)
+        setTimeout(onAdvance, 2000)
       })
     }
   }
@@ -157,7 +172,7 @@ export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
             padding: '16px',
             borderRadius: '10px',
             border: '1px solid rgba(31, 144, 255, 0.2)',
-            marginBottom: '20px',
+            marginBottom: '20px'
           }}
         >
           <p style={{ fontSize: '1.15rem', fontWeight: 500, margin: 0 }}>{q.prompt}</p>
@@ -178,7 +193,7 @@ export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
             <input
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && submit()}
+              onKeyDown={(e) => e.key === 'Enter' && submit()}
               placeholder="Type your answer here..."
               style={{ width: '100%', fontSize: '1.05rem' }}
               autoFocus
@@ -222,10 +237,10 @@ export const LessonEngine: React.FC<{ user: string }> = ({ user }) => {
 
       {showReset && (
         <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '8px', border: '1px solid rgba(244, 67, 54, 0.3)' }}>
-          <p style={{ margin: '0 0 12px 0', color: 'var(--text)' }}>Reset your progress?</p>
+          <p style={{ margin: '0 0 12px 0', color: 'var(--text)' }}>Restart the current lesson from the first question?</p>
           <div className="button-group">
             <button className="danger" onClick={handleReset} style={{ flex: 1 }}>
-              🔄 Reset All
+              🔄 Restart Lesson
             </button>
             <button className="secondary" onClick={() => setShowReset(false)} style={{ flex: 1 }}>
               ✕ Cancel
