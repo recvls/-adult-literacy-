@@ -18,11 +18,11 @@
     "icon": "🅵",
     "description": "Learn the next letters with listening and matching practice.",
     "questions": [
-      { "id": "q6", "type": "letter", "prompt": "Listen and type the letter for the sound: /f/ (like in \"fish\")", "answer": "f" },
-      { "id": "q7", "type": "letter", "prompt": "Listen and type the letter for the sound: /g/ (like in \"go\")", "answer": "g" },
-      { "id": "q8", "type": "mcq", "prompt": "Which letter matches the sound /h/ (like in \"hat\")?", "choices": ["f", "g", "h", "i"], "answer": "h" },
-      { "id": "q9", "type": "letter", "prompt": "Listen and type the letter for the sound: /i/ (like in \"it\")", "answer": "i" },
-      { "id": "q10", "type": "letter", "prompt": "Listen and type the letter for the sound: /j/ (like in \"jump\")", "answer": "j" }
+      { "id": "q6", "type": "letter", "prompt": "Listen and type the letter for the sound: f (like in \"fish\")", "answer": "f" },
+      { "id": "q7", "type": "letter", "prompt": "Listen and type the letter for the sound: g (like in \"go\")", "answer": "g" },
+      { "id": "q8", "type": "mcq", "prompt": "Which letter matches the sound h (like in \"hat\")?", "choices": ["f", "g", "h", "i"], "answer": "h" },
+      { "id": "q9", "type": "letter", "prompt": "Listen and type the letter for the sound: i (like in \"it\")", "answer": "i" },
+      { "id": "q10", "type": "letter", "prompt": "Listen and type the letter for the sound: j (like in \"jump\")", "answer": "j" }
     ]
   },
   {
