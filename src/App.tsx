@@ -5,12 +5,14 @@ import { LessonEngine } from './components/LessonEngine'
 import { Dashboard } from './pages/Dashboard'
 import { Learn } from './pages/Learn'
 import { Profile } from './pages/Profile'
+import { useLessons } from './hooks/useLessons'
 import { useUser } from './hooks/useUser'
 
 type Page = 'dashboard' | 'learn' | 'lesson' | 'profile'
 
 const AppContent = () => {
-  const { user, setUser, logout } = useUser()
+  const { user, initializeUser, logout } = useUser()
+  const { lessons, loading: lessonsLoading } = useLessons()
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0)
 
@@ -29,7 +31,7 @@ const AppContent = () => {
           <small style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>Learn to read and practice letters</small>
         </div>
         <Onboarding onDone={(name) => {
-          setUser({
+          initializeUser({
             userId: `user-${Date.now()}`,
             name,
             xp: 0,
@@ -50,12 +52,16 @@ const AppContent = () => {
         <Dashboard
           onStartLearning={() => setCurrentPage('learn')}
           onLogout={() => logout()}
+          lessonCount={lessons.length}
+          loading={lessonsLoading}
         />
       )}
 
       {currentPage === 'learn' && (
         <>
           <Learn
+            lessons={lessons}
+            loading={lessonsLoading}
             onSelectLesson={(idx) => {
               setSelectedLessonIndex(idx)
               setCurrentPage('lesson')
@@ -76,6 +82,7 @@ const AppContent = () => {
         <>
           <LessonEngine
             user={user.name}
+            lessons={lessons}
             initialLessonIndex={selectedLessonIndex}
             onFinishLesson={() => setCurrentPage('dashboard')}
           />

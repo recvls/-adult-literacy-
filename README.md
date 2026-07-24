@@ -22,6 +22,7 @@ A modern, progressive web app for adult literacy learners with **speech recognit
 - 📱 **Responsive Design**: Works on mobile, tablet, and desktop
 - ⚡ **Fast Performance**: Built with React + Vite, < 160KB bundle
 - 🎯 **Intuitive Navigation**: Multi-page layout with bottom nav
+- ☁️ **Backend Sync**: Optional Express API support for user progress and lesson delivery
 
 ## 🎯 Project Structure
 
@@ -44,9 +45,15 @@ src/
 ├── hooks/               # Custom React hooks
 │   └── useUser.ts       # User context hook
 ├── utils/               # Utilities
+│   ├── api.ts           # Backend API client
 │   └── speechService.ts # Speech API wrapper
-├── data/                # Lesson content
-│   └── lessons.ts       # 4 lesson sets with 20+ questions
+├── data/                # Shared lesson content
+│   ├── lessons.json     # Lesson definitions used by frontend and backend
+│   └── lessons.ts       # Typed lesson export for React
+├── server/              # Optional backend API server
+│   ├── index.js         # Express server for lessons and progress
+│   └── data/
+│       └── users.json   # Local user progress store
 ├── App.tsx              # Main app with routing
 ├── main.tsx             # Entry point
 └── styles.css           # Dark blue theme + responsive design
@@ -55,12 +62,24 @@ src/
 ## 🚀 Getting Started
 
 ### Installation
+This repository does not track `node_modules`; install dependencies locally.
 ```bash
 cd adult-literacy-pwa
 npm install
 npm run dev
 ```
 Visit `http://localhost:5173/`
+
+### Backend Server
+Run the backend in one terminal:
+```bash
+npm run server
+```
+Then run the frontend in another terminal:
+```bash
+npm run dev
+```
+The backend runs on `http://localhost:4000` and the Vite dev server proxies `/api` requests there.
 
 ### Building for Production
 ```bash

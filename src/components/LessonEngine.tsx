@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { lessons, Question } from '../data/lessons'
 import {
   speakText,
   stopSpeech,
@@ -9,9 +8,10 @@ import {
   isSpeechRecognitionSupported
 } from '../utils/speechService'
 import { useUser } from '../hooks/useUser'
+import type { Lesson } from '../hooks/useLessons'
 
-export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number; onFinishLesson?: () => void }> = ({ user, initialLessonIndex = 0, onFinishLesson }) => {
-  const [lessonIndex, setLessonIndex] = useState(() => Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1))
+export const LessonEngine: React.FC<{ user: string; lessons: Lesson[]; initialLessonIndex?: number; onFinishLesson?: () => void }> = ({ user, lessons, initialLessonIndex = 0, onFinishLesson }) => {
+  const [lessonIndex, setLessonIndex] = useState(() => Math.min(Math.max(initialLessonIndex, 0), Math.max(lessons.length - 1, 0)))
   const [qIndex, setQIndex] = useState(0)
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect'; message: string } | null>(null)
@@ -21,8 +21,21 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
   const recognitionRef = React.useRef<any>(null)
   const { addXP, completeLesson } = useUser()
 
+  if (lessons.length === 0) {
+    return (
+      <div className="card">
+        <div className="header">
+          <h3>No lessons available</h3>
+        </div>
+        <p style={{ color: 'var(--text-secondary)' }}>
+          Lesson content could not be loaded yet. Try again after checking your connection.
+        </p>
+      </div>
+    )
+  }
+
   const lesson = lessons[lessonIndex]
-  const q: Question = lesson.questions[qIndex]
+  const q = lesson.questions[qIndex]
   const totalQuestions = lessons.reduce((sum, lessonItem) => sum + lessonItem.questions.length, 0)
   const currentQuestionIndex = lessons.slice(0, lessonIndex).reduce((sum, lessonItem) => sum + lessonItem.questions.length, 0) + qIndex + 1
   const progress = (currentQuestionIndex / totalQuestions) * 100
