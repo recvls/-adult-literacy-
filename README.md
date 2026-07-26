@@ -1,4 +1,4 @@
-# 📚 Adult Literacy PWA
+# 📚 Adult Literacy PWA Joseph edited
 
 A modern, progressive web app for adult literacy learners with **speech recognition**, **text-to-speech**, **dark blue theme**, **gamification features**, and improved offline caching.
 
