@@ -98,10 +98,11 @@ const buildLocalHint = ({ question, answer, lessonTitle, userName }) => {
   return defaultHint
 }
 
-const getAIHint = async ({ question, answer, lessonTitle, userName }) => {
+const getAIHint = async ({ question, answer, lessonTitle, userName, openaiKey }) => {
   const prompt = `You are an adult literacy tutor helping learners understand short spelling and reading questions. Provide a friendly, simple hint for this question without giving the full answer away. Question: "${question}". Lesson: "${lessonTitle}". Learner name: "${userName}".`
+  const key = typeof openaiKey === 'string' && openaiKey.trim() ? openaiKey.trim() : OPENAI_API_KEY
 
-  if (!OPENAI_API_KEY) {
+  if (!key) {
     return {
       hint: buildLocalHint({ question, answer, lessonTitle, userName }),
       source: 'local'
@@ -113,8 +114,7 @@ const getAIHint = async ({ question, answer, lessonTitle, userName }) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`
-      },
+        Authorization: `Bearer ${key}`,
       body: JSON.stringify({
         model: 'gpt-3.5-turbo',
         messages: [
@@ -145,12 +145,12 @@ const getAIHint = async ({ question, answer, lessonTitle, userName }) => {
 }
 
 app.post('/api/ai/hint', async (req, res) => {
-  const { question, answer, lessonTitle, userName } = req.body
+  const { question, answer, lessonTitle, userName, openaiKey } = req.body
   if (!question || !answer || !lessonTitle || !userName) {
     return res.status(400).json({ error: 'Missing required hint fields' })
   }
 
-  const hintResult = await getAIHint({ question, answer, lessonTitle, userName })
+  const hintResult = await getAIHint({ question, answer, lessonTitle, userName, openaiKey })
   res.json(hintResult)
 })
 

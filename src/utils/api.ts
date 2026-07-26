@@ -1,5 +1,10 @@
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
+const getSavedAIKey = () => {
+  if (typeof window === 'undefined') return ''
+  return localStorage.getItem('openai-api-key') || ''
+}
+
 const fetchJson = async (url: string, options: RequestInit = {}) => {
   const response = await fetch(`${API_BASE}${url}`, {
     headers: {
@@ -70,7 +75,10 @@ export type AIHintResponse = {
 export const requestAIHint = async (request: AIHintRequest) => {
   return fetchJson('/api/ai/hint', {
     method: 'POST',
-    body: JSON.stringify(request)
+    body: JSON.stringify({
+      ...request,
+      openaiKey: getSavedAIKey()
+    })
   }) as Promise<AIHintResponse>
 }
 

@@ -23,6 +23,7 @@ export const LessonEngine: React.FC<{ user: string; lessons: Lesson[]; initialLe
   const [aiSource, setAiSource] = useState<'openai' | 'local' | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [siriMode, setSiriMode] = useState(false)
   const recognitionRef = React.useRef<any>(null)
   const { addXP, completeLesson } = useUser()
 
@@ -162,6 +163,11 @@ export const LessonEngine: React.FC<{ user: string; lessons: Lesson[]; initialLe
     setShowReset(false)
   }
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setSiriMode(localStorage.getItem('siri-mode') === 'true')
+  }, [])
+
   const loadAIHint = async () => {
     setAiError(null)
     setAiHint(null)
@@ -183,6 +189,12 @@ export const LessonEngine: React.FC<{ user: string; lessons: Lesson[]; initialLe
       setAiLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!aiHint || !siriMode) return
+    if (!isSpeechSynthesisSupported()) return
+    speakText(`Siri says: ${aiHint}`, () => {})
+  }, [aiHint, siriMode])
 
   return (
     <div className="card">
@@ -302,7 +314,7 @@ export const LessonEngine: React.FC<{ user: string; lessons: Lesson[]; initialLe
             disabled={aiLoading}
             style={{ flex: 1 }}
           >
-            {aiLoading ? '💡 Loading...' : '💡 AI Hint'}
+            {aiLoading ? '💡 Loading...' : siriMode ? '💡 Ask Siri' : '💡 AI Hint'}
           </button>
         </div>
       </div>
