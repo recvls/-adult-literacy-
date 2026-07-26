@@ -1,5 +1,6 @@
 # 📚 Adult Literacy PWA for me alone
 
+
 A modern, progressive web app for adult literacy learners with **speech recognition**, **text-to-speech**, **dark blue theme**, **gamification features**, and improved offline caching.
 
 ## 🌟 Features
@@ -22,6 +23,7 @@ A modern, progressive web app for adult literacy learners with **speech recognit
 - 📱 **Responsive Design**: Works on mobile, tablet, and desktop
 - ⚡ **Fast Performance**: Built with React + Vite, < 160KB bundle
 - 🎯 **Intuitive Navigation**: Multi-page layout with bottom nav
+- ☁️ **Backend Sync**: Optional Express API support for user progress and lesson delivery
 
 ## 🎯 Project Structure
 
@@ -44,9 +46,15 @@ src/
 ├── hooks/               # Custom React hooks
 │   └── useUser.ts       # User context hook
 ├── utils/               # Utilities
+│   ├── api.ts           # Backend API client
 │   └── speechService.ts # Speech API wrapper
-├── data/                # Lesson content
-│   └── lessons.ts       # 4 lesson sets with 20+ questions
+├── data/                # Shared lesson content
+│   ├── lessons.json     # Lesson definitions used by frontend and backend
+│   └── lessons.ts       # Typed lesson export for React
+├── server/              # Optional backend API server
+│   ├── index.js         # Express server for lessons and progress
+│   └── data/
+│       └── users.json   # Local user progress store
 ├── App.tsx              # Main app with routing
 ├── main.tsx             # Entry point
 └── styles.css           # Dark blue theme + responsive design
@@ -55,12 +63,34 @@ src/
 ## 🚀 Getting Started
 
 ### Installation
+This repository does not track `node_modules`; install dependencies locally.
 ```bash
 cd adult-literacy-pwa
 npm install
 npm run dev
 ```
 Visit `http://localhost:5173/`
+
+### Backend Server
+The frontend can now start together with the backend in one command:
+```bash
+npm run dev
+```
+If you want to run only the backend instead, use:
+```bash
+npm run dev:server
+```
+The backend runs on `http://localhost:4000` and the Vite dev server proxies `/api` requests there.
+
+### AI Tutor
+An AI-powered hint helper is built into the lesson experience. Click the 💡 AI Hint button on any question for a personalized tip.
+
+If you have an OpenAI API key, you can now enter it directly in the app: open Profile and add it under AI Settings.
+The key is stored locally in your browser only and will be used for smarter responses.
+
+You can also enable Siri-style voice feedback in the same AI Settings panel.
+
+If no API key is provided, the app still uses a smart local hint engine so the feature works without extra setup.
 
 ### Building for Production
 ```bash

@@ -1,10 +1,15 @@
 import React from 'react'
 import { Navbar } from '../components/Navbar'
 import { LessonCard } from '../components/LessonCard'
-import { lessons } from '../data/lessons'
 import { useUser } from '../hooks/useUser'
+import type { Lesson } from '../hooks/useLessons'
 
-export const Learn: React.FC<{ onSelectLesson: (index: number) => void; onLogout: () => void }> = ({ onSelectLesson, onLogout }) => {
+export const Learn: React.FC<{
+  lessons: Lesson[]
+  loading: boolean
+  onSelectLesson: (index: number) => void
+  onLogout: () => void
+}> = ({ lessons, loading, onSelectLesson, onLogout }) => {
   const { user } = useUser()
 
   if (!user) return null
@@ -29,18 +34,19 @@ export const Learn: React.FC<{ onSelectLesson: (index: number) => void; onLogout
               Each topic is a mini lesson with picture-style words and letter sounds. Tap one to start learning quickly.
             </p>
           </div>
-          {allComplete ? (
+          <div style={{ padding: '16px', background: 'rgba(255, 193, 7, 0.08)', borderRadius: '10px' }}>
+            <strong style={{ display: 'block', marginBottom: '8px', color: 'var(--text)' }}>Lessons available</strong>
+            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+              {loading ? 'Loading lesson topics…' : `${lessons.length} topics ready for practice.`}
+            </p>
+          </div>
+          {allComplete && !loading ? (
             <div style={{ padding: '16px', background: 'rgba(76, 175, 80, 0.08)', borderRadius: '10px' }}>
               <p style={{ margin: 0, color: 'var(--text)' }}>
                 🎉 You finished every lesson! Revisit any module to practice or go back to the dashboard for your progress.
               </p>
             </div>
-          ) : (
-            <div style={{ padding: '16px', background: 'rgba(255, 193, 7, 0.08)', borderRadius: '10px' }}>
-              <strong style={{ display: 'block', marginBottom: '8px', color: 'var(--text)' }}>Next lesson to try</strong>
-              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{nextLesson?.title}</p>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {lessons.map((lesson, idx) => (

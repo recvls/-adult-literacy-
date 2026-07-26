@@ -1,12 +1,29 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useUser } from '../hooks/useUser'
 import { Navbar } from '../components/Navbar'
 import { Achievement } from '../components/Achievement'
 
 export const Profile: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   const { user } = useUser()
+  const [apiKey, setApiKey] = useState('')
+  const [siriMode, setSiriMode] = useState(false)
+  const [savedMessage, setSavedMessage] = useState('')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setApiKey(localStorage.getItem('openai-api-key') || '')
+    setSiriMode(localStorage.getItem('siri-mode') === 'true')
+  }, [])
 
   if (!user) return null
+
+  const saveSettings = () => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem('openai-api-key', apiKey.trim())
+    localStorage.setItem('siri-mode', String(siriMode))
+    setSavedMessage('Saved! Your AI key is stored locally only.')
+    setTimeout(() => setSavedMessage(''), 3000)
+  }
 
   return (
     <>
@@ -50,10 +67,32 @@ export const Profile: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         </div>
 
         <div className="card" style={{ background: 'rgba(0, 0, 0, 0.2)', marginBottom: 0 }}>
-          <h3 style={{ margin: '0 0 12px 0', color: 'var(--accent-light)' }}>About</h3>
+          <h3 style={{ margin: '0 0 12px 0', color: 'var(--accent-light)' }}>AI Settings</h3>
           <p style={{ margin: 0, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
-            You are making great progress on your literacy journey! Keep practicing daily to maintain your streak and unlock all achievements.
+            Add your own OpenAI API key for smarter hints, or keep using the built-in assistant.
+            The key is stored locally in your browser only.
           </p>
+          <div style={{ marginTop: '16px', display: 'grid', gap: '12px' }}>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Enter your OpenAI API key"
+              style={{ width: '100%' }}
+            />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
+              <input
+                type="checkbox"
+                checked={siriMode}
+                onChange={(e) => setSiriMode(e.target.checked)}
+              />
+              Enable Siri-style voice assistant
+            </label>
+            <button className="secondary" onClick={saveSettings}>
+              Save AI Settings
+            </button>
+            {savedMessage && <small style={{ color: 'var(--accent-light)' }}>{savedMessage}</small>}
+          </div>
         </div>
 
         <Achievement />

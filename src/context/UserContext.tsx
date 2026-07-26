@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react'
+import { createUser as backendCreateUser, getUser as backendGetUser, saveUser as backendSaveUser } from '../utils/api'
 
 export interface UserProgress {
   userId: string
@@ -12,7 +13,7 @@ export interface UserProgress {
 
 interface UserContextType {
   user: UserProgress | null
-  setUser: (user: UserProgress | null) => void
+  initializeUser: (user: UserProgress) => void
   addXP: (amount: number) => void
   completeLesson: (lessonId: string) => void
   logout: () => void
@@ -71,7 +72,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         achievements: Array.isArray(parsed.achievements) ? parsed.achievements : [],
         lastLoginDate: typeof parsed.lastLoginDate === 'string' ? parsed.lastLoginDate : new Date().toISOString()
       }
-      setUser(buildAchievements(loadedUser))
+      const normalized = buildAchievements(loadedUser)
+      saveUser(normalized)
+
+      const syncRemote = async () => {
+        try {
+          const remote = await backendGetUser(normalized.userId)
+          const merged = {
+            ...normalized,
+            ...remote,
+            completedLessons: Array.from(new Set([...(normalized.completedLessons || []), ...(remote.completedLessons || [])])),
+            achievements: Array.from(new Set([...(normalized.achievements || []), ...(remote.achievements || [])]))
+          }
+          saveUser({
+            ...merged,
+            achievements: buildAchievements(merged)
+          })
+        } catch {
+          // If the backend is unavailable or the user doesn't exist remotely, continue with local progress.
+        }
+      }
+
+      syncRemote()
     } catch {
       localStorage.removeItem('user-progress')
     }
@@ -86,15 +108,36 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user])
 
+  const persistUser = async (updatedUser: UserProgress) => {
+    localStorage.setItem('user-progress', JSON.stringify(updatedUser))
+
+    try {
+      await backendSaveUser(updatedUser)
+    } catch (error) {
+      const message = (error as Error).message || ''
+      if (message.includes('404')) {
+        try {
+          await backendCreateUser(updatedUser)
+        } catch {
+          // If create also fails, keep local progress.
+        }
+      }
+    }
+  }
+
   const saveUser = (updatedUser: UserProgress) => {
     const withAchievements = { ...updatedUser, achievements: buildAchievements(updatedUser) }
     setUser(withAchievements)
-    localStorage.setItem('user-progress', JSON.stringify(withAchievements))
+    persistUser(withAchievements)
   }
 
   const logout = () => {
     setUser(null)
     localStorage.removeItem('user-progress')
+  }
+
+  const initializeUser = (newUser: UserProgress) => {
+    saveUser(newUser)
   }
 
   const addXP = (amount: number) => {
@@ -116,7 +159,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   return (
-    <UserContext.Provider value={{ user, setUser, addXP, completeLesson, logout, addAchievement }}>
+    <UserContext.Provider value={{ user, initializeUser, addXP, completeLesson, logout, addAchievement }}>
       {children}
     </UserContext.Provider>
   )

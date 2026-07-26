@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { lessons, Question } from '../data/lessons'
 import {
   speakText,
   stopSpeech,
@@ -9,20 +8,40 @@ import {
   isSpeechRecognitionSupported
 } from '../utils/speechService'
 import { useUser } from '../hooks/useUser'
+import { requestAIHint } from '../utils/api'
+import type { Lesson } from '../hooks/useLessons'
 
-export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number; onFinishLesson?: () => void }> = ({ user, initialLessonIndex = 0, onFinishLesson }) => {
-  const [lessonIndex, setLessonIndex] = useState(() => Math.min(Math.max(initialLessonIndex, 0), lessons.length - 1))
+export const LessonEngine: React.FC<{ user: string; lessons: Lesson[]; initialLessonIndex?: number; onFinishLesson?: () => void }> = ({ user, lessons, initialLessonIndex = 0, onFinishLesson }) => {
+  const [lessonIndex, setLessonIndex] = useState(() => Math.min(Math.max(initialLessonIndex, 0), Math.max(lessons.length - 1, 0)))
   const [qIndex, setQIndex] = useState(0)
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect'; message: string } | null>(null)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [showReset, setShowReset] = useState(false)
+  const [aiHint, setAiHint] = useState<string | null>(null)
+  const [aiSource, setAiSource] = useState<'openai' | 'local' | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [siriMode, setSiriMode] = useState(false)
   const recognitionRef = React.useRef<any>(null)
   const { addXP, completeLesson } = useUser()
 
+  if (lessons.length === 0) {
+    return (
+      <div className="card">
+        <div className="header">
+          <h3>No lessons available</h3>
+        </div>
+        <p style={{ color: 'var(--text-secondary)' }}>
+          Lesson content could not be loaded yet. Try again after checking your connection.
+        </p>
+      </div>
+    )
+  }
+
   const lesson = lessons[lessonIndex]
-  const q: Question = lesson.questions[qIndex]
+  const q = lesson.questions[qIndex]
   const totalQuestions = lessons.reduce((sum, lessonItem) => sum + lessonItem.questions.length, 0)
   const currentQuestionIndex = lessons.slice(0, lessonIndex).reduce((sum, lessonItem) => sum + lessonItem.questions.length, 0) + qIndex + 1
   const progress = (currentQuestionIndex / totalQuestions) * 100
@@ -30,6 +49,9 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
   useEffect(() => {
     setFeedback(null)
     setAnswer('')
+    setAiHint(null)
+    setAiSource(null)
+    setAiError(null)
     if (isSpeechSynthesisSupported()) {
       setIsSpeaking(true)
       speakText(q.prompt, () => {
@@ -135,8 +157,44 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
     setQIndex(0)
     setLessonIndex(0)
     setFeedback(null)
+    setAiHint(null)
+    setAiSource(null)
+    setAiError(null)
     setShowReset(false)
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setSiriMode(localStorage.getItem('siri-mode') === 'true')
+  }, [])
+
+  const loadAIHint = async () => {
+    setAiError(null)
+    setAiHint(null)
+    setAiSource(null)
+    setAiLoading(true)
+
+    try {
+      const result = await requestAIHint({
+        question: q.prompt,
+        answer: q.answer,
+        lessonTitle: lesson.title,
+        userName: user
+      })
+      setAiHint(result.hint)
+      setAiSource(result.source)
+    } catch (err) {
+      setAiError('AI helper could not load right now. Try again later.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!aiHint || !siriMode) return
+    if (!isSpeechSynthesisSupported()) return
+    speakText(`Siri says: ${aiHint}`, () => {})
+  }, [aiHint, siriMode])
 
   return (
     <div className="card">
@@ -206,7 +264,25 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
             {feedback.message}
           </div>
         )}
-
+ 
+        {aiHint || aiError ? (
+          <div className="card" style={{ background: 'rgba(255, 255, 255, 0.05)', marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div>
+                <strong style={{ color: 'var(--accent-light)' }}>AI Tutor</strong>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                  {aiSource === 'openai' ? 'Powered by OpenAI' : aiSource === 'local' ? 'Local hint engine' : 'AI assistant'}
+                </div>
+              </div>
+            </div>
+            {aiError ? (
+              <p style={{ margin: 0, color: 'var(--error)' }}>{aiError}</p>
+            ) : (
+              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{aiHint}</p>
+            )}
+          </div>
+        ) : null}
+ 
         <div className="button-group">
           <button onClick={submit} style={{ flex: 1 }}>
             ✓ Submit
@@ -232,6 +308,14 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
               {isListening ? '⏹️ Stop' : '🎤 Listen'}
             </button>
           )}
+          <button
+            className="secondary"
+            onClick={loadAIHint}
+            disabled={aiLoading}
+            style={{ flex: 1 }}
+          >
+            {aiLoading ? '💡 Loading...' : siriMode ? '💡 Ask Siri' : '💡 AI Hint'}
+          </button>
         </div>
       </div>
 
