@@ -1,5 +1,4 @@
 import React from 'react'
-import { useUser } from '../hooks/useUser'
 
 export const LessonCard: React.FC<{
   id: string

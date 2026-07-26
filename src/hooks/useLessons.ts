@@ -21,6 +21,7 @@ export const useLessons = () => {
       .catch((err) => {
         if (!active) return
         setError(err?.message ?? 'Could not load lessons from the backend.')
+        setLessons(localLessons)
       })
       .finally(() => {
         if (!active) return

@@ -71,15 +71,26 @@ npm run dev
 Visit `http://localhost:5173/`
 
 ### Backend Server
-Run the backend in one terminal:
-```bash
-npm run server
-```
-Then run the frontend in another terminal:
+The frontend can now start together with the backend in one command:
 ```bash
 npm run dev
 ```
+If you want to run only the backend instead, use:
+```bash
+npm run dev:server
+```
 The backend runs on `http://localhost:4000` and the Vite dev server proxies `/api` requests there.
+
+### AI Tutor
+An AI-powered hint helper is built into the lesson experience. Click the 💡 AI Hint button on any question for a personalized tip.
+
+If you have an OpenAI API key, set it in your environment before starting the backend:
+```bash
+export OPENAI_API_KEY="your_openai_api_key"
+npm run dev
+```
+
+If no API key is provided, the app still uses a smart local hint engine so the feature works offline and without extra setup.
 
 ### Building for Production
 ```bash

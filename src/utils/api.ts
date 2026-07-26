@@ -55,6 +55,25 @@ export const createUser = async (user: UserProgressPayload) => {
   }) as Promise<UserProgressPayload>
 }
 
+export type AIHintRequest = {
+  question: string
+  answer: string
+  lessonTitle: string
+  userName: string
+}
+
+export type AIHintResponse = {
+  hint: string
+  source: 'openai' | 'local'
+}
+
+export const requestAIHint = async (request: AIHintRequest) => {
+  return fetchJson('/api/ai/hint', {
+    method: 'POST',
+    body: JSON.stringify(request)
+  }) as Promise<AIHintResponse>
+}
+
 export const saveUser = async (user: UserProgressPayload) => {
   return fetchJson(`/api/users/${user.userId}`, {
     method: 'PUT',
