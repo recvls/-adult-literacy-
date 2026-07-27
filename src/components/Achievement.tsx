@@ -25,7 +25,7 @@ export const Achievement: React.FC = () => {
 
   const userAchievements = achievements.map(a => ({
     ...a,
-    unlocked: user.achievements.includes(a.id)
+    unlocked: (user.achievements ?? []).includes(a.id)
   }))
 
   return (

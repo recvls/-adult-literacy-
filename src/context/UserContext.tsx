@@ -71,7 +71,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         achievements: Array.isArray(parsed.achievements) ? parsed.achievements : [],
         lastLoginDate: typeof parsed.lastLoginDate === 'string' ? parsed.lastLoginDate : new Date().toISOString()
       }
-      setUser(buildAchievements(loadedUser))
+      setUser({
+  ...loadedUser,
+  achievements: buildAchievements(loadedUser)
+})
     } catch {
       localStorage.removeItem('user-progress')
     }

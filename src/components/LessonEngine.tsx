@@ -1,3 +1,4 @@
+import { getTutorResponse } from "../utils/smartTutor";
 import React, { useEffect, useState } from 'react'
 import { lessons, Question } from '../data/lessons'
 import {
@@ -18,8 +19,34 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [showReset, setShowReset] = useState(false)
+  const [showAITutor, setShowAITutor] = useState(false)
+  const [aiQuestion, setAiQuestion] = useState('')
+  const [aiReply, setAiReply] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
   const recognitionRef = React.useRef<any>(null)
   const { addXP, completeLesson } = useUser()
+  const askAITutor = async () => {
+  if (!aiQuestion.trim()) return;
+  setAiLoading(true);
+  setAiReply('');
+  try {
+    const res = await fetch('http://localhost:3001/api/ai-tutor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: aiQuestion,
+        lesson: lesson.title ?? lesson.id,
+        answer: answer,
+      }),
+    });
+    const data = await res.json();
+    setAiReply(data.reply);
+  } catch (err) {
+    setAiReply("Sorry, I couldn't reach the tutor right now. Please try again.");
+  } finally {
+    setAiLoading(false);
+  }
+};
 
   const lesson = lessons[lessonIndex]
   const q: Question = lesson.questions[qIndex]
@@ -32,7 +59,7 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
     setAnswer('')
     if (isSpeechSynthesisSupported()) {
       setIsSpeaking(true)
-      speakText(q.prompt, () => {
+      speakText(q.speech ?? q.prompt, () => {
         setIsSpeaking(false)
       })
     }
@@ -41,7 +68,7 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
   const speakQuestion = () => {
     if (!isSpeechSynthesisSupported()) return
     setIsSpeaking(true)
-    speakText(q.prompt, () => {
+    speakText(q.speech ?? q.prompt, () => {
       setIsSpeaking(false)
     })
   }
@@ -100,35 +127,42 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
   }
 
   const submit = () => {
-    const correct = q.answer.trim().toLowerCase() === answer.trim().toLowerCase()
-    const onAdvance = () => {
-      const isLastQuestionInLesson = qIndex + 1 >= lesson.questions.length
-      const isLastLesson = lessonIndex + 1 >= lessons.length
-      if (!isLastQuestionInLesson) {
-        setQIndex((current) => current + 1)
-        setAnswer('')
-        setFeedback(null)
-        return
-      }
-      goToNextQuestion(true)
+  const correct =
+    q.answer.trim().toLowerCase() === answer.trim().toLowerCase();
+
+  const onAdvance = () => {
+    const isLastQuestionInLesson = qIndex + 1 >= lesson.questions.length;
+
+    if (!isLastQuestionInLesson) {
+      setQIndex((current) => current + 1);
+      setAnswer("");
+      setFeedback(null);
+      return;
     }
 
-    if (correct) {
-      setFeedback({ type: 'correct', message: '🎉 Correct! Great job!' })
-      speakText('Correct! Well done!', () => {
-        setTimeout(onAdvance, 1500)
-      })
-    } else {
-      setFeedback({
-        type: 'incorrect',
-        message: `❌ Not quite. The answer is: ${q.answer}`
-      })
-      speakText(`The answer is ${q.answer}`, () => {
-        setTimeout(onAdvance, 2000)
-      })
-    }
+    goToNextQuestion(true);
+  };
+
+  if (correct) {
+    setFeedback({
+      type: "correct",
+      message: "🎉 Correct! Great job!",
+    });
+
+    speakText("Correct! Well done!", () => {
+      setTimeout(onAdvance, 1500);
+    });
+  } else {
+    setFeedback({
+      type: "incorrect",
+      message: "❌ Not quite. Listen carefully and try again.",
+    });
+
+    speakText("Not quite. Please try again.");
+
+    return;
   }
-
+};
   const handleReset = () => {
     stopSpeech()
     stopListening()
@@ -142,7 +176,7 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
     <div className="card">
       <div className="header">
         <div>
-          <h3>{lesson.title}</h3>
+          <h3>THIS IS A TEST</h3>
           <small>Learner: {user}</small>
         </div>
         <button
@@ -207,7 +241,7 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
           </div>
         )}
 
-        <div className="button-group">
+                <div className="button-group">
           <button onClick={submit} style={{ flex: 1 }}>
             ✓ Submit
           </button>
@@ -233,6 +267,70 @@ export const LessonEngine: React.FC<{ user: string; initialLessonIndex?: number;
             </button>
           )}
         </div>
+
+
+        {/* 🤖 AI Tutor goes here */}
+        <div style={{ marginTop: '20px' }}>
+          <button
+            className="secondary"
+            onClick={() => setShowAITutor(!showAITutor)}
+            style={{ width: '100%' }}
+          >
+            🤖 Ask AI Tutor
+          </button>
+
+          {showAITutor && (
+            <div
+              style={{
+                marginTop: '12px',
+                padding: '16px',
+                background: 'rgba(31, 144, 255, 0.08)',
+                borderRadius: '10px',
+                border: '1px solid rgba(31, 144, 255, 0.2)'
+              }}
+            >
+              <input
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+                placeholder="Ask your tutor a question..."
+                style={{
+                  width: '100%',
+                  marginBottom: '10px',
+                  fontSize: '1rem'
+                }}
+              />
+
+              <button
+  type="button"
+  onClick={askAITutor}
+  disabled={aiLoading}
+  style={{
+    width: "100%",
+    padding: "12px",
+    fontSize: "16px",
+    cursor: "pointer"
+  }}
+>
+  {aiLoading ? '🤖 Thinking...' : '💬 Ask'}
+</button>
+
+              {aiReply && (
+                <div
+                  style={{
+                    marginTop: '12px',
+                    padding: '12px',
+                    background: 'white',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <strong>AI Tutor:</strong>
+                  <p style={{ marginBottom: 0 }}>{aiReply}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
 
       {showReset && (

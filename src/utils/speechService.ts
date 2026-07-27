@@ -6,17 +6,29 @@ export const speakText = (text: string, onEnd?: () => void) => {
     return;
   }
 
-  // Cancel any ongoing speech
   speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
+
   utterance.rate = 0.9;
   utterance.pitch = 1;
   utterance.volume = 1;
+  utterance.lang = "en-US";
 
-  if (onEnd) {
-    utterance.onend = onEnd;
+  const voices = speechSynthesis.getVoices();
+
+  if (voices.length > 0) {
+    utterance.voice = voices.find(v => v.lang.startsWith("en")) || voices[0];
   }
+
+  utterance.onend = () => {
+    onEnd?.();
+  };
+
+  utterance.onerror = (e) => {
+    console.error("Speech error:", e);
+    onEnd?.();
+  };
 
   speechSynthesis.speak(utterance);
 };
@@ -77,4 +89,7 @@ export const stopSpeechRecognition = (recognition: any) => {
 export const isSpeechRecognitionSupported = () => {
   const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   return !!SpeechRecognition;
+};
+window.speechSynthesis.onvoiceschanged = () => {
+  speechSynthesis.getVoices();
 };
